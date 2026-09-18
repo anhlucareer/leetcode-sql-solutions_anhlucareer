@@ -1,0 +1,29 @@
+WITH table_A AS (
+    SELECT user_id, 
+        COUNT(rating) OVER (PARTITION BY user_id) AS amount_mr
+    FROM MovieRating
+),
+table_B AS (
+    SELECT DISTINCT u.name AS result,
+           DENSE_RANK() OVER (ORDER BY a.amount_mr DESC) AS rn_u
+    FROM table_A a
+    INNER JOIN Users u ON a.user_id = u.user_id
+),
+table_C AS (
+    SELECT movie_id,
+           ROUND(AVG(CAST(rating AS FLOAT)) OVER (PARTITION BY movie_id), 2) AS avg_mr
+    FROM MovieRating
+    WHERE created_at BETWEEN '2020-02-01' AND EOMONTH('2020-02-01', 0)
+),
+table_D AS (
+    SELECT DISTINCT m.title AS result,
+           DENSE_RANK() OVER (ORDER BY c.avg_mr DESC) AS rn_m
+    FROM table_C c
+    INNER JOIN Movies m ON c.movie_id = m.movie_id
+)
+SELECT results
+FROM (
+    (SELECT MIN(result) AS results FROM table_B WHERE rn_u=1)
+    UNION ALL
+    (SELECT MIN(result) AS results FROM table_D WHERE rn_m=1)
+) AS combined_table;
