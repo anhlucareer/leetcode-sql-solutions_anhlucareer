@@ -1,0 +1,13 @@
+WITH user_reactions AS (
+    SELECT DISTINCT user_id, reaction, 
+    COUNT(content_id) OVER(PARTITION BY user_id) AS content_count,
+    CAST(COUNT(reaction) OVER(PARTITION BY user_id,reaction) AS FLOAT) AS type_reactions,
+    CAST(COUNT(reaction) OVER(PARTITION BY user_id) AS FLOAT) AS total_reactions
+    FROM reactions
+)
+SELECT  user_id, 
+        reaction AS dominant_reaction, 
+        ROUND(type_reactions / total_reactions, 2) AS reaction_ratio
+FROM user_reactions
+WHERE content_count >= 5 AND ROUND(type_reactions / total_reactions, 2) >= 0.60
+ORDER BY reaction_ratio DESC, user_id ASC;
