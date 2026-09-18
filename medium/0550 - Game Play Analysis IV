@@ -1,0 +1,17 @@
+WITH Time_login AS (
+    SELECT player_id, device_id, event_date, games_played, 
+    ROW_NUMBER() OVER(PARTITION BY player_id ORDER BY event_date ASC) AS rn
+    FROM Activity
+)
+SELECT  ROUND(
+            SUM(CASE 
+                WHEN t2.rn IS NOT NULL THEN 1 
+                ELSE 0 
+                END
+            ) * 1.0
+            / COUNT(*)
+        ,2) AS fraction
+FROM Time_login t1 LEFT JOIN Time_login t2 
+        ON t1.player_id=t2.player_id 
+    AND DATEDIFF(day,t1.event_date, t2.event_date) =1
+WHERE t1.rn=1 
