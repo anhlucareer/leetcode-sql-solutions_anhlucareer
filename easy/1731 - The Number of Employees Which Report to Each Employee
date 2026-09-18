@@ -1,0 +1,10 @@
+WITH table_A AS (
+    SELECT reports_to, 
+    COUNT(reports_to) AS reports_count, 
+    ROUND(AVG(CAST(age AS FLOAT)), 0) AS average_age
+    FROM Employees
+    GROUP BY reports_to
+)
+SELECT e1.employee_id, e1.name,a.reports_count, a.average_age
+FROM Employees e1 INNER JOIN table_A a 
+    ON e1.employee_id=a.reports_to
