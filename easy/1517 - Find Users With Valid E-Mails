@@ -1,0 +1,5 @@
+SELECT *
+FROM Users
+WHERE mail LIKE '[a-zA-Z]%@leetcode.com' COLLATE Latin1_General_CS_AS
+  AND LEFT(mail, CHARINDEX('@', mail) - 1) NOT LIKE '%[^a-zA-Z0-9_.-]%'
+  AND LEN(mail) - LEN(REPLACE(mail, '@', '')) = 1;
