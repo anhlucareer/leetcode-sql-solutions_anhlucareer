@@ -1,0 +1,20 @@
+WITH churn_risk_customers AS (
+    SELECT  user_id, 
+            MAX(event_date) AS latest_date,
+            MAX(monthly_amount) AS max_historical_amount, 
+            DATEDIFF(day, MIN(event_date), MAX(event_date)) AS days_as_subscriber
+    FROM subscription_events
+    GROUP BY user_id
+    HAVING  COUNT(CASE WHEN event_type = 'cancel' THEN event_type END) = 0
+        AND COUNT(CASE WHEN event_type = 'downgrade' THEN event_type END) >= 1
+        AND DATEDIFF(day, MIN(event_date), MAX(event_date)) >= 60
+)
+SELECT  s.user_id, 
+        s.plan_name AS current_plan, 
+        s.monthly_amount AS current_monthly_amount, 
+        max_historical_amount, 
+        days_as_subscriber
+FROM churn_risk_customers c INNER JOIN subscription_events s 
+    ON c.user_id = s.user_id AND c.latest_date = s.event_date
+WHERE s.monthly_amount < 0.5 * max_historical_amount
+ORDER BY days_as_subscriber DESC, user_id ASC;
