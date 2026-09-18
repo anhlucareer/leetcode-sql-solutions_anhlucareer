@@ -1,0 +1,13 @@
+WITH table_A AS (
+    SELECT *, 
+    COUNT(prompt) OVER(PARTITION BY user_id) AS prompt_count,
+    MAX(tokens) OVER(PARTITION BY user_id) AS max_tokens,
+    ROUND(
+        AVG( CAST(tokens AS FLOAT) ) OVER (PARTITION BY user_id)
+    ,2) AS avg_tokens
+    FROM prompts
+)
+SELECT DISTINCT user_id, prompt_count, avg_tokens
+FROM table_A
+WHERE max_tokens > avg_tokens AND prompt_count >=3
+ORDER BY avg_tokens DESC, user_id ASC;
