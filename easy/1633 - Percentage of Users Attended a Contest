@@ -1,0 +1,7 @@
+WITH
+    table_A AS (SELECT COUNT(u.user_id) AS total_user_count FROM Users u),
+    table_B AS (SELECT r.contest_id, COUNT(r.user_id) AS attendees 
+                FROM Register r GROUP BY r.contest_id)
+SELECT contest_id, ROUND(attendees*100.0 /total_user_count,2) AS percentage
+FROM table_A CROSS JOIN table_B
+ORDER BY percentage DESC, contest_id ASC;
