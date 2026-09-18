@@ -1,0 +1,10 @@
+WITH table_A AS (
+    SELECT machine_id, process_id,
+            CAST( MAX (timestamp) - MIN (timestamp) AS FLOAT)  AS duration_time
+    FROM Activity
+    GROUP BY machine_id, process_id
+)
+SELECT machine_id, 
+ROUND ( AVG(duration_time), 3) AS processing_time
+FROM table_A
+GROUP BY machine_id
