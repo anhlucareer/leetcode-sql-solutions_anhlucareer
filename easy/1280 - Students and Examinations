@@ -1,0 +1,15 @@
+WITH ExamCounts AS (
+    SELECT 
+        student_id, 
+        subject_name, 
+        COUNT(subject_name) AS exam_count
+    FROM Examinations
+    GROUP BY student_id, subject_name
+)
+SELECT s.student_id, s.student_name, sub.subject_name, 
+       COALESCE(ec.exam_count, 0) AS attended_exams
+FROM Students s 
+CROSS JOIN Subjects sub
+LEFT JOIN ExamCounts ec 
+    ON s.student_id = ec.student_id AND sub.subject_name = ec.subject_name
+ORDER BY s.student_id, sub.subject_name;
