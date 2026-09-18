@@ -1,0 +1,8 @@
+WITH table_A AS (
+    SELECT num
+    FROM MyNumbers
+    GROUP BY num
+    HAVING count(num)=1
+)
+SELECT COALESCE(MAX(num),null) as num
+FROM table_A
