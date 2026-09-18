@@ -1,0 +1,27 @@
+WITH price_tier AS (
+    SELECT  store_id, 
+            MAX(price) AS highest_price, 
+            MIN(price) AS lowest_price
+    FROM inventory
+    GROUP BY store_id
+    HAVING COUNT(product_name) >=3
+),
+product_segment AS (
+    SELECT  p.store_id, 
+            i1.product_name AS most_exp_product, 
+            CAST(i1.quantity AS FLOAT) AS most_exp_quantity, 
+            i2.product_name AS cheapest_product, 
+            CAST(i2.quantity AS FLOAT) AS cheapest_quantity
+    FROM price_tier p
+    INNER JOIN inventory i1 ON p.store_id = i1.store_id AND p.highest_price = i1.price
+    INNER JOIN inventory i2 ON p.store_id = i2.store_id AND p.lowest_price = i2.price
+),
+inventory_imbalance AS (
+    SELECT store_id, most_exp_product, cheapest_product, 
+    ROUND(cheapest_quantity / most_exp_quantity, 2) AS imbalance_ratio
+    FROM product_segment 
+    WHERE most_exp_quantity < cheapest_quantity
+)
+SELECT i.store_id, s.store_name, s.location , i.most_exp_product, i.cheapest_product, i.imbalance_ratio
+FROM  inventory_imbalance i INNER JOIN stores s ON i.store_id=s.store_id
+ORDER BY i.imbalance_ratio DESC, s.store_name ASC;
