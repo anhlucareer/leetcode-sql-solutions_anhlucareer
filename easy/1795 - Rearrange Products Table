@@ -1,0 +1,5 @@
+SELECT product_id, store, price
+FROM Products
+UNPIVOT (
+    price FOR store IN (Store1, Store2, Store3)
+) AS unpivot_table;
