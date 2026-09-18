@@ -1,0 +1,8 @@
+SELECT DISTINCT actor_id, director_id
+FROM ActorDirector
+WHERE CONCAT(actor_id,'_',director_id) IN (
+    SELECT CONCAT(actor_id,'_',director_id) 
+    FROM ActorDirector 
+    GROUP BY actor_id, director_id 
+    HAVING COUNT(CONCAT(actor_id,'_',director_id)) >=3
+)
