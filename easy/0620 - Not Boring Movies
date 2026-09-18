@@ -1,0 +1,4 @@
+SELECT id, movie, [description], rating
+FROM Cinema
+WHERE rating <> 'boring' AND 
+ORDER BY rating DESC
