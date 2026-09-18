@@ -1,0 +1,10 @@
+SELECT c1.patient_id, p.patient_name, p.age,
+DATEDIFF(day, MIN(c1.test_date), MIN(c2.test_date)) AS recovery_time
+FROM covid_tests c1 
+INNER JOIN covid_tests c2 
+    ON c1.patient_id = c2.patient_id AND c1.test_date < c2.test_date
+INNER JOIN patients p 
+    ON p.patient_id = c1.patient_id
+WHERE c1.result = 'Positive' AND c2.result = 'Negative'
+GROUP BY c1.patient_id, p.patient_name, p.age
+ORDER BY recovery_time ASC, p.patient_name ASC
