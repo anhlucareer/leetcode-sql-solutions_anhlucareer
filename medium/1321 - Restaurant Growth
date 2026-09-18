@@ -1,0 +1,22 @@
+WITH table_A AS (
+    SELECT c2.visited_on,
+        (   SELECT (CASE 
+                    WHEN COUNT(DISTINCT c3.visited_on)=7 THEN SUM(c3.amount) 
+                    END)
+            FROM Customer c3 
+            WHERE c3.visited_on BETWEEN DATEADD(day,-6,c2.visited_on) AND c2.visited_on
+        ) AS amount, 
+        (   SELECT (CASE 
+                    WHEN COUNT(DISTINCT c3.visited_on)=7 THEN ROUND( SUM(c3.amount) * 1.0/ 7, 2)
+                    END)
+            FROM Customer c3 
+            WHERE c3.visited_on BETWEEN DATEADD(day,-6,c2.visited_on) AND c2.visited_on
+        ) AS average_amount
+    FROM Customer c2
+    GROUP BY c2.visited_on
+    HAVING COUNT(c2.customer_id)>=1
+)
+SELECT *
+FROM table_A
+WHERE amount IS NOT NULL AND average_amount IS NOT NULL
+ORDER BY visited_on ASC
