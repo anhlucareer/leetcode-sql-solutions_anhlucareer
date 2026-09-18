@@ -1,0 +1,27 @@
+WITH book_assessment AS (
+    SELECT  book_id, 
+            MAX(session_rating) - MIN(session_rating) AS rating_spread,
+            CAST(COUNT( CASE WHEN session_rating >=4 OR session_rating <=2 
+                        THEN session_id 
+                        END) 
+            AS FLOAT) AS extreme_count,
+            CAST(COUNT(session_id) AS FLOAT) AS total_sessions
+    FROM reading_sessions
+    WHERE book_id IN (
+        (SELECT book_id FROM reading_sessions WHERE session_rating >=4)
+        INTERSECT
+        (SELECT book_id FROM reading_sessions WHERE session_rating <=2)
+    )
+    GROUP BY book_id
+    HAVING COUNT(session_id) >=5
+),
+polarized_opinions AS (
+    SELECT a.book_id, title, author, genre, pages, a.rating_spread,
+    ROUND(a.extreme_count / a.total_sessions, 2) AS polarization_score
+    FROM book_assessment a INNER JOIN books b 
+        ON a.book_id = b.book_id
+)
+SELECT book_id, title, author, genre, pages, rating_spread, polarization_score
+FROM polarized_opinions
+WHERE polarization_score >= 0.6
+ORDER BY polarization_score DESC, title DESC;
