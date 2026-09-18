@@ -1,0 +1,22 @@
+WITH 
+table_A AS (
+    SELECT account_id,
+    (CASE
+        WHEN income < 20000 THEN 'Low Salary'
+        WHEN income BETWEEN 20000 AND 50000 THEN 'Average Salary'
+        ELSE 'High Salary'
+    END) AS category
+    FROM Accounts
+),
+all_categories AS (
+    SELECT category 
+    FROM (VALUES    ('Low Salary'),
+                    ('Average Salary'),
+                    ('High Salary')
+    ) AS t(category)
+)
+SELECT c.category, 
+COUNT(a.account_id) AS accounts_count
+FROM all_categories c LEFT JOIN table_A a 
+    ON c.category=a.category
+GROUP BY c.category
