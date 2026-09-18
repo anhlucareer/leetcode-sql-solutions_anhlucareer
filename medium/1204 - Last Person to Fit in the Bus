@@ -1,0 +1,10 @@
+WITH table_A AS (
+    SELECT person_name, SUM(weight) OVER(ORDER BY turn) AS running_weight
+    FROM Queue
+)
+SELECT person_name
+FROM table_A 
+WHERE running_weight = 
+    (SELECT MAX(running_weight) 
+    FROM table_A 
+    WHERE running_weight <=1000)
