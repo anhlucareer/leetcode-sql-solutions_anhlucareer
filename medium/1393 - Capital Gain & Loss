@@ -1,0 +1,15 @@
+WITH table_A AS (
+    SELECT DISTINCT stock_name,
+    SUM(CASE 
+        WHEN operation = 'buy' THEN price 
+        ELSE 0 
+    END) OVER (PARTITION BY stock_name) AS price_buy,
+    SUM(CASE 
+        WHEN operation = 'sell'THEN price 
+        ELSE 0 
+    END) OVER (PARTITION BY stock_name) AS price_sell
+    FROM Stocks
+)
+SELECT stock_name, 
+(price_sell-price_buy) AS capital_gain_loss
+FROM table_A
