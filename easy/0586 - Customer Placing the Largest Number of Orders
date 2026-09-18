@@ -1,0 +1,11 @@
+WITH table_A AS (
+    SELECT customer_number, COUNT(order_number) OVER(PARTITION BY customer_number) AS order_count
+    FROM Orders
+),
+table_B AS (
+    SELECT customer_number, DENSE_RANK() OVER (ORDER BY order_count DESC) AS rn
+    FROM table_A
+)
+SELECT DISTINCT customer_number
+FROM table_B
+WHERE rn=1
