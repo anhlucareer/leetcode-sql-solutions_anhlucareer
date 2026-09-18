@@ -1,0 +1,6 @@
+WITH table_A AS (
+    SELECT   DISTINCT u.name AS NAME, 
+            SUM(t.amount) OVER(PARTITION BY t.account) AS BALANCE
+    FROM Users u LEFT JOIN Transactions t ON u.account=t.account
+)
+SELECT * FROM table_A WHERE BALANCE > 10000
