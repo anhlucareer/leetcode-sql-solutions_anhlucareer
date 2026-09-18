@@ -1,0 +1,27 @@
+WITH season_division AS (
+    SELECT *, distance_km / fuel_consumed AS fuel_efficiency,
+    (CASE 
+        WHEN MONTH(trip_date) IN (1,2,3,4,5,6) THEN 'First half'
+        ELSE 'Second half'
+    END) AS season
+    FROM trips
+),
+driver_selection AS (
+    SELECT driver_id,
+    AVG(CASE WHEN season= 'First half' THEN fuel_efficiency END) AS 'first_half_avg',
+    AVG(CASE WHEN season= 'Second half' THEN fuel_efficiency END) AS 'second_half_avg'
+    FROM season_division
+    WHERE driver_id IN (
+        (SELECT driver_id FROM season_division WHERE season ='First half')
+        INTERSECT
+        (SELECT driver_id FROM season_division WHERE season ='Second half')
+    )
+    GROUP BY driver_id
+)
+SELECT s.driver_id, driver_name,
+ROUND(first_half_avg,2) AS 'first_half_avg',
+ROUND(second_half_avg,2) AS 'second_half_avg',
+ROUND(second_half_avg - first_half_avg,2) AS efficiency_improvement
+FROM driver_selection s INNER JOIN drivers d ON s.driver_id = d.driver_id
+WHERE second_half_avg > first_half_avg
+ORDER BY efficiency_improvement DESC, driver_name ASC;
