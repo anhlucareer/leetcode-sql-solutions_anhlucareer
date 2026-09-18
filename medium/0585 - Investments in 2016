@@ -1,0 +1,14 @@
+SELECT ROUND(SUM(tiv_2016), 2) AS tiv_2016
+FROM Insurance
+WHERE tiv_2015 IN (
+    SELECT tiv_2015
+    FROM Insurance
+    GROUP BY tiv_2015
+    HAVING COUNT(*) > 1                 -- shared tiv_2015 with someone else
+)
+AND CONCAT(lat, '_', lon) IN (
+    SELECT CONCAT(lat, '_', lon)
+    FROM Insurance
+    GROUP BY lat, lon
+    HAVING COUNT(*) = 1                 -- unique (lat, lon) pair — no one else shares it
+);
