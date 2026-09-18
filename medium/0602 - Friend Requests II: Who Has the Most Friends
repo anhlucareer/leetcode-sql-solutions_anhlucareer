@@ -1,0 +1,19 @@
+WITH all_id AS (
+    (SELECT DISTINCT requester_id AS id FROM RequestAccepted) 
+    UNION 
+    (SELECT DISTINCT accepter_id AS id FROM RequestAccepted) 
+),
+table_B AS (
+    SELECT a.id, 
+    COUNT(r1.requester_id) OVER(PARTITION BY a.id) AS num_request,
+    (SELECT COUNT(r2.accepter_id) FROM RequestAccepted r2 WHERE r2.accepter_id=a.id) AS num_accept
+    FROM all_id a LEFT JOIN RequestAccepted r1 ON a.id=r1.requester_id
+),
+table_C AS (
+    SELECT *, (num_request + num_accept) AS num,
+    ROW_NUMBER() OVER(ORDER BY (num_request + num_accept) DESC) AS rn
+    FROM table_B
+)
+SELECT id,num
+FROM table_C
+WHERE rn=1
