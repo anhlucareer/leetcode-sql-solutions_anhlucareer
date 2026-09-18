@@ -1,0 +1,29 @@
+WITH rank_employee AS (
+    SELECT *
+    FROM  ( SELECT *, RANK() OVER (PARTITION BY employee_id ORDER BY review_date DESC) AS rank_date
+            FROM performance_reviews ) t
+    WHERE employee_id IN    (  SELECT employee_id 
+                            FROM performance_reviews 
+                            GROUP BY employee_id 
+                            HAVING COUNT(review_id) >=3 )
+    AND rank_date IN (1,2,3)
+),
+selected_employee AS (
+    SELECT employee_id,  
+    MAX(rating) - MIN(rating) AS improvement_score
+    FROM rank_employee 
+    WHERE employee_id NOT IN (
+            SELECT r1.employee_id
+            FROM rank_employee r1
+            WHERE EXISTS (  SELECT r2.employee_id 
+                            FROM rank_employee r2 
+                            WHERE r2.employee_id = r1.employee_id
+                              AND r2.rank_date = r1.rank_date +1 
+                              AND r2.rating >= r1.rating)
+        )
+    GROUP BY employee_id
+    HAVING MAX(rating) - MIN(rating) > 1
+)
+SELECT s.employee_id, e.name, s.improvement_score
+FROM selected_employee s INNER JOIN employees e ON s.employee_id = e.employee_id
+ORDER BY s.improvement_score DESC, e.name ASC;
