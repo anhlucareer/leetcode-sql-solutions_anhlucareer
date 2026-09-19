@@ -1,0 +1,21 @@
+WITH unbanned_users AS (
+    SELECT users_id, role 
+    FROM Users 
+    WHERE banned <> 'Yes'
+),
+cancel_request AS (
+    SELECT  CAST(request_at AS DATE) AS Day,
+            CAST(COUNT( CASE 
+                        WHEN status <> 'completed' THEN status 
+                        END) 
+            AS FLOAT) AS canceled_request,
+            CAST(COUNT(id) AS FLOAT) AS total_request
+    FROM Trips
+    WHERE   client_id IN (SELECT users_id FROM unbanned_users WHERE role='client')
+        AND driver_id IN (SELECT users_id FROM unbanned_users WHERE role='driver')
+        AND CAST(request_at AS DATE) BETWEEN '2013-10-01' AND '2013-10-03'
+    GROUP BY request_at
+    HAVING  COUNT(id) >=1
+)
+SELECT Day, ROUND(canceled_request / total_request, 2) AS 'Cancellation Rate'
+FROM cancel_request
