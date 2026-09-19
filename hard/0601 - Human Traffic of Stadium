@@ -1,0 +1,13 @@
+WITH stadium_selected AS (
+    SELECT  *, 
+            id - ROW_NUMBER() OVER(ORDER BY visit_date ASC) AS discrepancy --already order by visit_date
+    FROM Stadium
+    WHERE people >= 100
+),
+consecutive_stadium AS (
+    SELECT *, COUNT(id) OVER(PARTITION BY discrepancy) AS consecutiveId_count
+    FROM stadium_selected
+)
+SELECT id, visit_date, people
+FROM consecutive_stadium
+WHERE consecutiveId_count >= 3
