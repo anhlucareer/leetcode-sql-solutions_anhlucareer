@@ -1,0 +1,42 @@
+WITH --not_standard_type 
+hyphen_type1 AS (
+    SELECT content_id, content_text AS original_text,
+    UPPER(LEFT(spl_type1.value, 1)) + LOWER( SUBSTRING(  spl_type1.value
+                                                        , 2
+                                                        , LEN(spl_type1.value)
+                                            )
+    ) AS new_text_type1
+    FROM user_content CROSS APPLY string_split (content_text, ' ') spl_type1
+    WHERE content_text NOT LIKE '%[^a-zA-Z]-[^a-zA-Z]%'
+), --standard_type
+hyphen_type2 AS (
+    SELECT content_id, content_text AS original_text,
+    UPPER(LEFT(spl_type2.value, 1)) + LOWER( SUBSTRING(  spl_type2.value
+                                                        , 2
+                                                        , LEN(spl_type2.value)
+                                            )
+    ) AS new_text_type2
+    FROM (SELECT *, REPLACE(content_text,'-','  ') AS new_text FROM user_content) hyphen
+    CROSS APPLY string_split (new_text,' ') spl_type2
+    WHERE content_text LIKE '[a-zA-Z]%[a-zA-Z]-[a-zA-Z]%[a-zA-Z]'
+), --not_standard_type 
+not_standard_type AS (
+    SELECT content_id, original_text,
+    REPLACE(STRING_AGG(IIF(new_text_type1='','-',new_text_type1),' '),' - ','-') AS converted_text
+    FROM hyphen_type1
+    GROUP BY content_id, original_text
+), --standard_type
+standard_type AS (
+    SELECT content_id, original_text,
+    REPLACE(STRING_AGG(
+                    IIF(new_text_type2 = '', '-', new_text_type2)
+                    , ' ')
+            ,' - '
+            ,'-'
+    ) AS converted_text
+    FROM hyphen_type2
+    GROUP BY content_id, original_text
+)
+SELECT * FROM not_standard_type
+UNION 
+SELECT * FROM standard_type
