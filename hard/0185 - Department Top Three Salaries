@@ -1,0 +1,7 @@
+WITH salary_segment AS (
+    SELECT *, DENSE_RANK() OVER (PARTITION BY departmentId ORDER BY salary DESC) AS rn
+    FROM Employee
+)
+SELECT d.name AS Department, s.name AS Employee, s.salary AS Salary 
+FROM salary_segment s INNER JOIN Department d ON s.departmentId = d.id
+WHERE s.rn IN (1,2,3)
