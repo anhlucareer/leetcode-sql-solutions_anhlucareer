@@ -1,0 +1,16 @@
+WITH top_performing AS (
+    SELECT *,
+    ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY completion_date) AS sequence_order
+    FROM course_completions
+    WHERE user_id   IN (SELECT user_id 
+                        FROM course_completions 
+                        GROUP BY user_id 
+                        HAVING COUNT(course_name)>=5 AND AVG(CAST(course_rating AS FLOAT)) >=4 )
+)
+SELECT  p1.course_name AS first_course, 
+        p2.course_name AS second_course, 
+        COUNT(*) AS transition_count
+FROM top_performing p1 JOIN top_performing p2 
+    ON p1.user_id = p2.user_id AND p1.sequence_order + 1 = p2.sequence_order
+GROUP BY p1.course_name, p2.course_name
+ORDER BY transition_count DESC, first_course, second_course ASC;
