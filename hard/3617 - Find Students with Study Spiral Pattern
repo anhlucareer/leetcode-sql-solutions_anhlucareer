@@ -1,7 +1,7 @@
 WITH base AS (
-    SELECT  student_id, subject, session_date, hours_studied,
+    SELECT  session_id, student_id, subject, session_date, hours_studied,
             DATEDIFF(day, session_date,
-                     LEAD(session_date) OVER (PARTITION BY student_id ORDER BY session_date)
+                     LEAD(session_date) OVER (PARTITION BY student_id ORDER BY session_id)
             ) AS date_diff,
             MIN(session_date) OVER (PARTITION BY student_id, subject) AS first_date
     FROM study_sessions
@@ -13,7 +13,7 @@ ranked AS (
 ),
 flagged AS (
     SELECT  *,
-            LAG(sequence_order) OVER (PARTITION BY student_id ORDER BY session_date) AS prev_order
+            LAG(sequence_order) OVER (PARTITION BY student_id ORDER BY session_id) AS prev_order
     FROM ranked
 ),
 study_pattern AS (
