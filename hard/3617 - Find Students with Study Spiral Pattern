@@ -25,7 +25,7 @@ study_pattern AS (
     HAVING  MAX(date_diff) <= 2
         AND MAX(sequence_order) >= 3
         AND COUNT(*) >= 2 * MAX(sequence_order)
-        AND SUM(CASE WHEN sequence_order > 1 AND prev_order > sequence_order THEN 1 END) IS NULL
+        AND SUM(CASE WHEN sequence_order > 1 AND prev_order >= sequence_order THEN 1 END) IS NULL
 )
 SELECT  s.student_id, s.student_name, s.major,
         p.cycle_length, p.total_study_hours
