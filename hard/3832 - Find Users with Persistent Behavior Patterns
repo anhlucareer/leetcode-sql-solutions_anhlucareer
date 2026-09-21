@@ -1,0 +1,12 @@
+SELECT  user_id, 
+        action, 
+        COUNT(action_date) AS streak_length,
+        MIN(action_date) AS start_date,
+        MAX(action_date) AS end_date
+FROM (  SELECT *, 
+        COUNT(action) OVER(PARTITION BY user_id, action_date) AS action_per_day 
+        FROM activity) t
+WHERE action_per_day = 1
+GROUP BY user_id, action
+HAVING COUNT(action_date) >= 5
+ORDER BY streak_length DESC, user_id ASC;
