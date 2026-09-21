@@ -1,0 +1,23 @@
+WITH date_filter AS (
+    SELECT a1.session_id, a1.user_id,
+    DATEDIFF(minute,a1.event_timestamp, a2.event_timestamp) AS duration
+    FROM app_events a1 JOIN app_events a2 
+        ON  a1.session_id=a2.session_id 
+        AND a1.event_type='app_open'
+        AND a2.event_type='app_close'
+    WHERE DATEDIFF(minute,a1.event_timestamp, a2.event_timestamp) > 30
+),
+abnormal_users AS (
+    SELECT session_id, user_id, 
+    CAST(COUNT(CASE WHEN event_type='click' THEN event_type END) AS FLOAT) AS click_count,
+    CAST(COUNT(CASE WHEN event_type='scroll' THEN event_type END) AS FLOAT) AS scroll_count
+    FROM app_events
+    WHERE session_id IN (SELECT session_id FROM date_filter)
+    GROUP BY session_id, user_id
+    HAVING  COUNT(CASE WHEN event_type='scroll' THEN event_type END) >=5
+        AND COUNT(CASE WHEN event_type='purchase' THEN event_type END) =0
+)
+SELECT a.session_id, a.user_id, d.duration AS session_duration_minutes, a.scroll_count
+FROM abnormal_users a JOIN date_filter d ON a.session_id=d.session_id
+WHERE a.click_count/a.scroll_count < 0.20
+ORDER BY a.scroll_count DESC, a.session_id ASC;
