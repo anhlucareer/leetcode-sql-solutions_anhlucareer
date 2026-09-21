@@ -1,0 +1,34 @@
+WITH base AS (
+    SELECT  student_id, subject, session_date, hours_studied,
+            DATEDIFF(day, session_date,
+                     LEAD(session_date) OVER (PARTITION BY student_id ORDER BY session_date)
+            ) AS date_diff,
+            MIN(session_date) OVER (PARTITION BY student_id, subject) AS first_date
+    FROM study_sessions
+),
+ranked AS (
+    SELECT  *,
+            DENSE_RANK() OVER (PARTITION BY student_id ORDER BY first_date, subject) AS sequence_order
+    FROM base
+),
+flagged AS (
+    SELECT  *,
+            LAG(sequence_order) OVER (PARTITION BY student_id ORDER BY session_date) AS prev_order
+    FROM ranked
+),
+study_pattern AS (
+    SELECT  student_id,
+            MAX(sequence_order)  AS cycle_length,
+            SUM(hours_studied)   AS total_study_hours
+    FROM flagged
+    GROUP BY student_id
+    HAVING  MAX(date_diff) <= 2
+        AND MAX(sequence_order) >= 3
+        AND COUNT(*) >= 2 * MAX(sequence_order)
+        AND SUM(CASE WHEN sequence_order > 1 AND prev_order > sequence_order THEN 1 END) IS NULL
+)
+SELECT  s.student_id, s.student_name, s.major,
+        p.cycle_length, p.total_study_hours
+FROM study_pattern p
+JOIN students s ON s.student_id = p.student_id
+ORDER BY p.cycle_length DESC, p.total_study_hours DESC;
